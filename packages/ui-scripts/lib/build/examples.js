@@ -70,7 +70,7 @@ if (args.includes('--watch')) {
     .filter(Boolean)
 } else {
   command = 'build-storybook'
-  commandArgs = ['-c', '.storybook', '-o', '__build__']
+  commandArgs = ['-c', '.storybook', '-o', '__build__', '--quiet']
   envVars = envVars
     .concat([
       `NODE_ENV=production`,

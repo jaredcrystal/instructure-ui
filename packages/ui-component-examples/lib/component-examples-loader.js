@@ -25,9 +25,9 @@
 const path = require('path')
 const fs = require('fs')
 const loaderUtils = require('loader-utils')
-const loadConfig = require('@instructure/config-loader')
 
 const parsePropValues = require('./parsePropValues')
+
 /**
  * A webpack loader that processes component example files for e.g. Storybook
  * for more see https://webpack.js.org/api/loaders/
@@ -36,34 +36,22 @@ module.exports = function componentExamplesLoader(source, map, meta) {
   this.cacheable && this.cacheable()
 
   const callback = this.async()
-  const config = {
-    maxExamples: 500,
-    ...loadConfig('examples', {})
-  }
-
-  const generateComponentExamples = require.resolve(
-    './generateComponentExamples'
-  )
+  const generateComponentExamples = require.resolve('./generateComponentExamples')
 
   // TODO do not use this method, its an internal webpack feature. See
   // https://github.com/webpack/loader-utils/issues/42
+  // weird string that contains the .examples.js file, e.g.
+  // !!/Users/matyas.szabo/CODE/instructure-ui/node_modules/babel-loader/lib/index.js??ref--6-1!/Users/matyas.szabo/CODE/instructure-ui/node_modules/eslint-loader/dist/cjs.js??ref--4!/Users/matyas.szabo/CODE/instructure-ui/packages/ui-tag/src/Tag/__examples__/Tag.examples.js
   const configPath = `!!${loaderUtils.getRemainingRequest(this)}`
 
-  const getComponentPath =
-    typeof config.getComponentPath === 'function'
-      ? config.getComponentPath
-      : (configFilePath) => {
-          const basePath = path.dirname(configFilePath)
-          // try to determine component source based on where the .examples file is:
-          return path.resolve(
-            basePath,
-            configFilePath.includes('__examples__')
-              ? '../index.js'
-              : './index.js'
-          )
-        }
+  // path to the component that is tested, e.g. /ui-tag/src/Tag/index.js
+  const componentPath = path.resolve(path.dirname(this.resourcePath), '../index.js')
 
-  const componentPath = getComponentPath(this.resourcePath)
+  // eslint-disable-next-line no-console
+  console.log("CF PATH:", configPath)
+
+  // eslint-disable-next-line no-console
+  console.log("comp PATH:", componentPath)
 
   fs.readFile(
     `${componentPath}${!componentPath.includes('.') ? '.js' : ''}`,
@@ -80,9 +68,7 @@ module.exports = function componentExamplesLoader(source, map, meta) {
         }
       }
       const result = `
-const generateComponentExamples = require(${JSON.stringify(
-        generateComponentExamples
-      )})
+const generateComponentExamples = require(${JSON.stringify(generateComponentExamples)})
 const config = require(${JSON.stringify(configPath)}).default
 
 // merge in generated prop values:
@@ -91,10 +77,7 @@ config.propValues = Object.assign(
   config.propValues || {}
 )
 const Component = require(${JSON.stringify(componentPath)}).default
-
-config.maxExamples = Boolean(config.maxExamples) ? config.maxExamples : ${
-        config.maxExamples
-      }
+config.maxExamples = Boolean(config.maxExamples) ? config.maxExamples : 500
 
 module.exports = {
  componentName: Component.displayName || Component.name,

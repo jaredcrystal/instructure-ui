@@ -42,7 +42,7 @@ console.log(
 )
 
 examplesContext.keys().map((requirePath) => {
-  const ctx = examplesContext(requirePath)
+  const ctx = examplesContext(requirePath) // comes from component-examples-loader.js
 
   if (ctx.sections && ctx.sections.length > 0) {
     const stories = storiesOf(ctx.componentName, module)
